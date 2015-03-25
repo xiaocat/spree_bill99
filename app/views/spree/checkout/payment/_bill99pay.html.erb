@@ -1,0 +1,20 @@
+<a id="bill99pay<%= payment_method.id %>" payment_method_id="<%= payment_method.id %>" ><img src="<%= payment_method.preferences[:iconUrl] %>" width="42" /></a>
+<script>
+    var id = "<%= payment_method.id %>";
+    $('#bill99pay' + id).click(function(e){
+        $.ajax({
+            url: '/bill99pay/checkout.json?payment_method_id=' + $(this).attr('payment_method_id'),
+            dataType: 'JSON',
+            type: 'GET',
+            success: function(response){
+                console.log(response);
+                window.location.href = response.url;
+            },
+            error: function(err){
+                console.log(err);
+            }
+        });
+
+    });
+
+</script>
