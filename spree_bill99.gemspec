@@ -2,10 +2,10 @@
 Gem::Specification.new do |s|
   s.platform    = Gem::Platform::RUBY
   s.name        = 'spree_bill99'
-  s.version     = '1.0.0'
+  s.version     = '3.0.0'
   s.summary     = 'Adds Bill99 Pay as a Payment Method to Spree Commerce'
   s.description = 'Adds Bill99 Pay as a Payment Method to Spree Commerce'
-  s.required_ruby_version = '>= 1.9.3'
+  s.required_ruby_version = '>= 2.1'
 
   s.author    = 'xiao'
   s.email     = '631573529@qq.com'
