@@ -1,6 +1,6 @@
 module Spree
   class Bill99payController < StoreController
-    ssl_allowed
+    # ssl_allowed
     skip_before_filter :verify_authenticity_token
 
     def bill99_url(action, options) # :nodoc: all
