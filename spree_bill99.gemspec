@@ -5,7 +5,7 @@ Gem::Specification.new do |s|
   s.version     = '3.0.0'
   s.summary     = 'Adds Bill99 Pay as a Payment Method to Spree Commerce'
   s.description = 'Adds Bill99 Pay as a Payment Method to Spree Commerce'
-  s.required_ruby_version = '>= 2.1'
+  s.required_ruby_version = '>= 2.0.0'
 
   s.author    = 'xiao'
   s.email     = '631573529@qq.com'
@@ -24,7 +24,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'factory_girl', '~> 4.5'
   s.add_development_dependency 'ffaker'
   s.add_development_dependency 'rspec-rails',  '~> 3.1'
-  s.add_development_dependency 'sass-rails', '~> 4.0.2'
+  s.add_development_dependency 'sass-rails', '~> 5.0.0.beta1'
   s.add_development_dependency 'selenium-webdriver'
   s.add_development_dependency 'simplecov'
   s.add_development_dependency 'sqlite3'
