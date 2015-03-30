@@ -16,6 +16,7 @@ module Spree
 
     def checkout
       order = current_order || raise(ActiveRecord::RecordNotFound)
+      bankId = params[:bankId] || nil
 
       url = bill99_url("https://www.99bill.com/gateway/recvMerchantInfoAction.htm", [
           ["inputCharset", 1],
@@ -30,7 +31,9 @@ module Spree
           ["orderTime", order.created_at && order.created_at.strftime("%Y%m%d%H%M%S")],
           ["productName", "#{order.line_items[0].product.name}等#{order.line_items.count}件"],
           ["productNum", order.line_items.count],
-          ["productDesc", "#{order.number}"]
+          ["productDesc", "#{order.number}"],
+          ["payType", bankId ? "10" : "00"],
+          ["bankId", bankId ? bankId.upcase : nil]
       ])
 
       render json:  { 'url' => url }
