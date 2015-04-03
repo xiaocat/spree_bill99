@@ -17,11 +17,12 @@ module Spree
     def checkout
       order = current_order || raise(ActiveRecord::RecordNotFound)
       bankId = params[:bankId] || nil
+      host = request.url.sub(request.fullpath, '')
 
       url = bill99_url("https://www.99bill.com/gateway/recvMerchantInfoAction.htm", [
           ["inputCharset", 1],
-          ["pageUrl", request.url.sub(request.fullpath, '')  + '/bill99pay/notify?id=' + order.id.to_s + '&payment_method_id=' + params[:payment_method_id].to_s],
-          ["bgUrl", request.url.sub(request.fullpath,'') + '/bill99pay/notify?id=' + order.id.to_s + '&payment_method_id=' + params[:payment_method_id].to_s],
+          ["pageUrl", host  + '/bill99pay/notify?id=' + order.id.to_s + '&payment_method_id=' + params[:payment_method_id].to_s],
+          ["bgUrl", host + '/bill99pay/notify?id=' + order.id.to_s + '&payment_method_id=' + params[:payment_method_id].to_s],
           ["version", "v2.0"],
           ["language", 1],
           ["signType", 4],
@@ -47,10 +48,29 @@ module Spree
         return
       end
 
+      is_valid = begin
+        Timeout::timeout(10) do
+          options = [
+              ['version', 'v2.0'],
+              ['signType', 1],
+              ['merchantAcctId', payment_method.preferences[:merchantAcctId]],
+              ['queryType', 0],
+              ['queryMode', 1],
+              ['orderId', order.number]
+          ]
+          options << ['signMsg', Digest::MD5.hexdigest((options+[['key', payment_method.preferences[:queryKey]]]).map{|k,v|"#{k}=#{v}"}.join('&')).upcase]
+          result = SOAP::WSDLDriverFactory.new("https://www.99bill.com/apipay/services/gatewayOrderQuery?wsdl").create_rpc_driver.gatewayOrderQuery(options.map{|k,v| { k => { Fixnum => SOAP::SOAPInt, String => SOAP::SOAPString }[v.class].new(v) } }.inject(&:merge))
+          order_re = result.orders[0]
+          signInfo = Digest::MD5.hexdigest((%w[orderId orderAmount orderTime dealTime payResult payType payAmount fee dealId].map{|k| (v = order_re.send(k)) && v != '' ? [k, v] : nil }.compact+[['key', payment_method.preferences[:queryKey]]]).map{|k,v|"#{k}=#{v}"}.join('&')).upcase
+          signMsg = Digest::MD5.hexdigest((%w[version signType merchantAcctId errCode currentPage pageCount pageSize recordCount].map{|k| (v = result.send(k)) && v != '' ? [k, v] : nil }.compact+[['key', payment_method.preferences[:queryKey]]]).map{|k,v|"#{k}=#{v}"}.join('&')).upcase
+          order_re.payResult == '10' && order_re.orderId == order.number && order_re.orderAmount.to_s == (order.total*100).to_i.to_s && order_re.signInfo == signInfo && result.signMsg == signMsg
+        end
+      rescue Exception => e
+        false
+      end
+
       # cert = OpenSSL::X509::Certificate.new(payment_method.preferences[:server_public_key].gsub('\n', "\n")) rescue nil
       # is_valid = cert && cert.public_key.verify(OpenSSL::Digest::SHA1.new, Base64.decode64(params[:signMsg]), (%w[merchantAcctId version language signType payType bankId orderId orderTime orderAmount dealId bankDealId dealTime payAmount fee ext1 ext2 payResult errCode].map{|k| (v=params[k]) && !v.blank? ? [k,v] : nil}.compact).map{|k,v|"#{k}=#{v}"}.join('&'))
-      # p '==========' + is_valid
-      is_valid = true
 
       unless params[:payResult] == "10" && params[:orderAmount] == (order.total * 100).to_i.to_s && is_valid
         failure_return order
