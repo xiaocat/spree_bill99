@@ -25,6 +25,18 @@ Add this extension to your spree.rb with this line:
 Rails.application.config.spree.payment_methods << Spree::Gateway::Bill99pay
 ```
 
+Add this to Gemfile in main project:
+
+```ruby
+gem 'soap4r-spox'
+```
+
+And require it in appliction.rb
+
+```ruby
+require 'soap/wsdlDriver'
+```
+
 Testing
 -------
 
