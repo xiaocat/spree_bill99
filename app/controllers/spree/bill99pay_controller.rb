@@ -72,7 +72,7 @@ module Spree
       # cert = OpenSSL::X509::Certificate.new(payment_method.preferences[:server_public_key].gsub('\n', "\n")) rescue nil
       # is_valid = cert && cert.public_key.verify(OpenSSL::Digest::SHA1.new, Base64.decode64(params[:signMsg]), (%w[merchantAcctId version language signType payType bankId orderId orderTime orderAmount dealId bankDealId dealTime payAmount fee ext1 ext2 payResult errCode].map{|k| (v=params[k]) && !v.blank? ? [k,v] : nil}.compact).map{|k,v|"#{k}=#{v}"}.join('&'))
 
-      is_valid = (payment_method.preferences[:merchantAcctId] == params[:merchantAcctId]) && params[:version] == "v2.0" && params[:language] == 1 && params[:signType] == 4 && params[:orderId] == order.number && params[:orderTime] == order.created_at.strftime("%Y%m%d%H%M%S")
+      is_valid = (payment_method.preferences[:merchantAcctId] == params[:merchantAcctId]) && params[:version] == "v2.0" && params[:language].to_i == 1 && params[:signType].to_i == 4 && params[:orderId] == order.number && params[:orderTime] == order.created_at.strftime("%Y%m%d%H%M%S")
 
       unless params[:payResult] == "10" && params[:orderAmount] == (order.total * 100).to_i.to_s && is_valid
         failure_return order
