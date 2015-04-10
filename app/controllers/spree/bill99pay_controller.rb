@@ -48,29 +48,31 @@ module Spree
         return
       end
 
-      is_valid = begin
-        Timeout::timeout(10) do
-          options = [
-              ['version', 'v2.0'],
-              ['signType', 1],
-              ['merchantAcctId', payment_method.preferences[:merchantAcctId]],
-              ['queryType', 0],
-              ['queryMode', 1],
-              ['orderId', order.number]
-          ]
-          options << ['signMsg', Digest::MD5.hexdigest((options+[['key', payment_method.preferences[:queryKey]]]).map{|k,v|"#{k}=#{v}"}.join('&')).upcase]
-          result = SOAP::WSDLDriverFactory.new("https://www.99bill.com/apipay/services/gatewayOrderQuery?wsdl").create_rpc_driver.gatewayOrderQuery(options.map{|k,v| { k => { Fixnum => SOAP::SOAPInt, String => SOAP::SOAPString }[v.class].new(v) } }.inject(&:merge))
-          order_re = result.orders[0]
-          signInfo = Digest::MD5.hexdigest((%w[orderId orderAmount orderTime dealTime payResult payType payAmount fee dealId].map{|k| (v = order_re.send(k)) && v != '' ? [k, v] : nil }.compact+[['key', payment_method.preferences[:queryKey]]]).map{|k,v|"#{k}=#{v}"}.join('&')).upcase
-          signMsg = Digest::MD5.hexdigest((%w[version signType merchantAcctId errCode currentPage pageCount pageSize recordCount].map{|k| (v = result.send(k)) && v != '' ? [k, v] : nil }.compact+[['key', payment_method.preferences[:queryKey]]]).map{|k,v|"#{k}=#{v}"}.join('&')).upcase
-          order_re.payResult == '10' && order_re.orderId == order.number && order_re.orderAmount.to_s == (order.total*100).to_i.to_s && order_re.signInfo == signInfo && result.signMsg == signMsg
-        end
-      rescue Exception => e
-        false
-      end
+      # is_valid = begin
+      #   Timeout::timeout(10) do
+      #     options = [
+      #         ['version', 'v2.0'],
+      #         ['signType', 1],
+      #         ['merchantAcctId', payment_method.preferences[:merchantAcctId]],
+      #         ['queryType', 0],
+      #         ['queryMode', 1],
+      #         ['orderId', order.number]
+      #     ]
+      #     options << ['signMsg', Digest::MD5.hexdigest((options+[['key', payment_method.preferences[:queryKey]]]).map{|k,v|"#{k}=#{v}"}.join('&')).upcase]
+      #     result = SOAP::WSDLDriverFactory.new("https://www.99bill.com/apipay/services/gatewayOrderQuery?wsdl").create_rpc_driver.gatewayOrderQuery(options.map{|k,v| { k => { Fixnum => SOAP::SOAPInt, String => SOAP::SOAPString }[v.class].new(v) } }.inject(&:merge))
+      #     order_re = result.orders[0]
+      #     signInfo = Digest::MD5.hexdigest((%w[orderId orderAmount orderTime dealTime payResult payType payAmount fee dealId].map{|k| (v = order_re.send(k)) && v != '' ? [k, v] : nil }.compact+[['key', payment_method.preferences[:queryKey]]]).map{|k,v|"#{k}=#{v}"}.join('&')).upcase
+      #     signMsg = Digest::MD5.hexdigest((%w[version signType merchantAcctId errCode currentPage pageCount pageSize recordCount].map{|k| (v = result.send(k)) && v != '' ? [k, v] : nil }.compact+[['key', payment_method.preferences[:queryKey]]]).map{|k,v|"#{k}=#{v}"}.join('&')).upcase
+      #     order_re.payResult == '10' && order_re.orderId == order.number && order_re.orderAmount.to_s == (order.total*100).to_i.to_s && order_re.signInfo == signInfo && result.signMsg == signMsg
+      #   end
+      # rescue Exception => e
+      #   false
+      # end
 
       # cert = OpenSSL::X509::Certificate.new(payment_method.preferences[:server_public_key].gsub('\n', "\n")) rescue nil
       # is_valid = cert && cert.public_key.verify(OpenSSL::Digest::SHA1.new, Base64.decode64(params[:signMsg]), (%w[merchantAcctId version language signType payType bankId orderId orderTime orderAmount dealId bankDealId dealTime payAmount fee ext1 ext2 payResult errCode].map{|k| (v=params[k]) && !v.blank? ? [k,v] : nil}.compact).map{|k,v|"#{k}=#{v}"}.join('&'))
+
+      is_valid = (payment_method.preferences[:merchantAcctId] == params[:merchantAcctId]) && params[:version] == "v2.0" && params[:language].to_i == 1 && params[:signType].to_i == 4 && params[:orderId] == order.number && params[:orderTime] == order.created_at.strftime("%Y%m%d%H%M%S")
 
       unless params[:payResult] == "10" && params[:orderAmount] == (order.total * 100).to_i.to_s && is_valid
         failure_return order

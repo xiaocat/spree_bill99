@@ -1,0 +1,6 @@
+<div id='bill99pay-warning' style="display:none">
+  <strong><%= Spree.t('no_payment_via_admin_backend', :scope => 'bill99pay') %></strong>
+</div>
+<script>
+    SpreeBill99Pay.paymentMethodID = "<%= payment_method.id %>"
+</script>
