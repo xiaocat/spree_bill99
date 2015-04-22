@@ -6,6 +6,7 @@ module Spree
     preference :server_public_key, :string #快钱公钥
     preference :client_private_key, :string #商户私钥
     preference :iconUrl, :string
+    preference :returnHost, :string
 
     def supports?(source)
       true
