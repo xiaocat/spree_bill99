@@ -51,7 +51,7 @@ module Spree
       order = Spree::Order.find(params[:id]) || raise(ActiveRecord::RecordNotFound)
 
       if order.complete?
-        render :text => "success", :layout => false
+        render json: { 'errCode' => 0, 'msg' => 'success'}
         return
       end
 
@@ -95,9 +95,9 @@ module Spree
       end
 
       if is_valid
-        render :text => "success", :layout => false
+        render json: { 'errCode' => 0, 'msg' => 'success'}
       else
-        render :text => "failure", :layout => false
+        render json: { 'errCode' => 1, 'msg' => 'failure'}
       end
 
     end
