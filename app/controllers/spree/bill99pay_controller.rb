@@ -29,7 +29,7 @@ module Spree
           ["orderId", order.number],
           ["orderAmount", (order.total*100).to_i],
           ["orderTime", order.created_at && order.created_at.strftime("%Y%m%d%H%M%S")],
-          ["productName", "#{order.line_items[0].product.name}等#{order.line_items.count}件"],
+          ["productName", "#{order.line_items[0].product.name.slice(0,30)}等#{order.line_items.count}件"],
           ["productNum", order.line_items.count],
           ["productDesc", "#{order.number}"],
           ["payType", bankId ? "10" : "00"],
