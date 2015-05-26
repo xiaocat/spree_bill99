@@ -39,7 +39,10 @@ module Spree
 
     def checkout
       order = current_order || raise(ActiveRecord::RecordNotFound)
-      render json:  { 'url' => self.pay_option(order) }
+      respond_to do |format|
+        format.html { redirect_to self.pay_option(order) }
+        format.json  { render json: {'url' => self.pay_option(order)} }
+      end
     end
 
     def checkout_api
